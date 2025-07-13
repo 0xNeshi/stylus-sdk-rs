@@ -54,6 +54,7 @@ pub struct PublicImpl<E: InterfaceExtension = Extension> {
     pub implements: Vec<syn::Type>,
     pub funcs: Vec<PublicFn<E::FnExt>>,
     pub associated_types: Vec<(syn::Ident, syn::Type)>,
+    pub supertrait_associated_types: Vec<(syn::Ident, syn::Type)>,
     #[allow(dead_code)]
     pub extension: E,
 }
@@ -107,6 +108,17 @@ impl PublicImpl {
                             quote! { #name = #value }
                         })
                         .collect::<Vec<_>>();
+
+                    let assoc_types_formatted = [
+                        self.supertrait_associated_types
+                            .iter()
+                            .map(|(name, value)| {
+                                quote! { #name = #value }
+                            })
+                            .collect::<Vec<_>>(),
+                        assoc_types_formatted,
+                    ]
+                    .concat();
 
                     &parse_quote! { dyn #trait_ < #(#assoc_types_formatted),* > }
                 } else {

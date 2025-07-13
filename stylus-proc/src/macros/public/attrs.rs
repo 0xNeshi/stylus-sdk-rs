@@ -44,6 +44,36 @@ impl Parse for Selector {
     }
 }
 
+/// Associated type mapping for supertraits.
+///
+/// Used for the `#[supertrait_associated_types(AssocType1 = Type1, AssocType2 = Type2)]` attribute.
+pub struct SupertraitAssociatedTypes {
+    pub types: Punctuated<AssociatedTypeMapping, Token![,]>,
+}
+
+impl Parse for SupertraitAssociatedTypes {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(Self {
+            types: Punctuated::parse_terminated(input)?,
+        })
+    }
+}
+
+/// A single associated type mapping (ident = type).
+pub struct AssociatedTypeMapping {
+    pub ident: syn::Ident,
+    pub ty: syn::Type,
+}
+
+impl Parse for AssociatedTypeMapping {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let ident = input.parse()?;
+        let _eq_token: Token![=] = input.parse()?;
+        let ty = input.parse()?;
+        Ok(Self { ident, ty })
+    }
+}
+
 mod kw {
     syn::custom_keyword!(name);
 }

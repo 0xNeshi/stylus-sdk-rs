@@ -6,7 +6,7 @@ use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
 use proc_macro_error::emit_error;
 use quote::ToTokens;
-use syn::{parse_macro_input, spanned::Spanned};
+use syn::{parse::Parse, parse_macro_input, spanned::Spanned};
 
 use crate::{
     types::Purity,
@@ -95,6 +95,21 @@ impl From<&mut syn::ItemImpl> for PublicImpl {
             }
         }
 
+        // Parse the supertrait_associated_types attribute
+        let supertrait_associated_types = node
+            .attrs
+            .iter()
+            .find(|attr| attr.path().is_ident("supertrait_associated_types"))
+            .map(|attr| {
+                attr.parse_args_with(attrs::SupertraitAssociatedTypes::parse)
+                    .expect("failed to parse supertrait_associated_types")
+                    .types
+                    .into_iter()
+                    .map(|mapping| (mapping.ident, mapping.ty))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
         #[allow(clippy::let_unit_value)]
         let extension = <Extension as InterfaceExtension>::build(node);
         Self {
@@ -105,6 +120,7 @@ impl From<&mut syn::ItemImpl> for PublicImpl {
             implements,
             funcs,
             associated_types,
+            supertrait_associated_types,
             extension,
         }
     }
